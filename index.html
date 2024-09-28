@@ -4,13 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OGmessenger</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
         body {
             background-color: #121212;
             color: #ffffff;
-            font-family: 'Roboto', sans-serif;
+            font-family: Arial, sans-serif;
             margin: 0;
             display: flex;
             flex-direction: column;
@@ -40,9 +38,6 @@
             padding: 20px;
             overflow-y: auto;
             border-bottom: 1px solid #333;
-            border-radius: 5px;
-            background-color: #2a2a2a;
-            margin-bottom: 20px;
         }
         #messageInput {
             display: flex;
@@ -50,7 +45,7 @@
             background-color: #1e1e1e;
             border-top: 1px solid #333;
         }
-        #inputField, #phoneField, #passwordField, #barcodeField {
+        #inputField, #phoneField, #passwordField, #friendBarcodeField {
             flex: 1;
             padding: 10px;
             border: 1px solid #333;
@@ -59,7 +54,7 @@
             border-radius: 5px;
             margin-top: 10px;
         }
-        #sendButton, #loginButton, #addFriendButton {
+        #sendButton, #loginButton, #searchButton {
             padding: 10px 15px;
             background-color: #6200ee;
             color: #fff;
@@ -67,9 +62,8 @@
             border-radius: 5px;
             cursor: pointer;
             margin-left: 10px;
-            transition: background-color 0.3s;
         }
-        #sendButton:hover, #loginButton:hover, #addFriendButton:hover {
+        #sendButton:hover, #loginButton:hover, #searchButton:hover {
             background-color: #3700b3;
         }
         .message {
@@ -112,59 +106,6 @@
             margin-top: 10px;
             width: 100%;
         }
-        .notification {
-            color: #ffeb3b;
-            font-size: 14px;
-            margin-top: 10px;
-            display: none;
-        }
-        .friendsList {
-            margin-top: 20px;
-            width: 100%;
-            max-height: 100px;
-            overflow-y: auto;
-            border: 1px solid #333;
-            border-radius: 5px;
-            background-color: #1e1e1e;
-            padding: 10px;
-        }
-        .friend {
-            margin: 5px 0;
-            padding: 5px;
-            background-color: #333;
-            border-radius: 5px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .friendName {
-            flex: 1;
-        }
-        .searchContainer {
-            display: flex;
-            margin-top: 10px;
-            width: 100%;
-        }
-        .searchInput {
-            flex: 1;
-            padding: 10px;
-            border: 1px solid #333;
-            border-radius: 5px;
-            background-color: #222;
-            color: #fff;
-            margin-right: 10px;
-        }
-        .profilePicture {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            overflow: hidden;
-            margin-bottom: 15px;
-        }
-        .profilePicture img {
-            width: 100%;
-            height: auto;
-        }
     </style>
 </head>
 <body>
@@ -177,10 +118,9 @@
             <option value="249">Sudan (+249)</option>
             <option value="966">Saudi Arabia (+966)</option>
         </select>
-        <input type="text" id="phoneField" placeholder="Enter your phone number" aria-label="Phone number" />
-        <input type="password" id="passwordField" placeholder="Create a password" aria-label="Password" />
-        <button id="loginButton" aria-label="Login">Login</button>
-        <div class="notification" id="loginNotification"></div>
+        <input type="text" id="phoneField" placeholder="Enter your phone number" />
+        <input type="password" id="passwordField" placeholder="Create a password" />
+        <button id="loginButton">Login</button>
     </div>
 
     <header id="appHeader" style="display: none;">
@@ -190,31 +130,21 @@
     <div id="messageContainer" style="display: none;"></div>
 
     <div id="messageInput" style="display: none;">
-        <input type="text" id="inputField" placeholder="Type your message..." aria-label="Message input" />
-        <button id="sendButton" aria-label="Send message"><i class="fas fa-paper-plane"></i> Send</button>
-        <div class="notification" id="sendNotification"></div>
+        <input type="text" id="inputField" placeholder="Type your message..." />
+        <button id="sendButton">Send</button>
     </div>
 
     <div id="profileContainer" style="display: none;">
-        <h3>Your Profile</h3>
-        <div class="profilePicture" id="profilePicture">
-            <img src="" alt="Profile" id="profileImg" style="display:none;" />
-        </div>
-        <input type="file" id="uploadPicture" accept="image/*" aria-label="Upload Profile Picture" />
+        <h3>Your Profile</ h3>
         <div class="barcode" id="barcode"></div>
         <button id="viewMessagesButton">View Messages</button>
-        <h4>Add Friend by Barcode</h4>
-        <input type="text" id="barcodeField" placeholder="Enter friend's barcode" aria-label="Barcode input" />
-        <button id="addFriendButton">Add Friend</button>
-        <div class="notification" id="friendNotification"></div>
+        <button id="findFriendsButton">Find Friends</button>
+    </div>
 
-        <h4>Search Friends</h4>
-        <div class="searchContainer">
-            <input type="text" id="searchField" class="searchInput" placeholder="Search friends..." />
-        </div>
-
-        <h4>Your Friends</h4>
-        <div class="friendsList" id="friendsList"></div>
+    <div id="friendSearchContainer" style="display: none;">
+        <h3>Find Friends</h3>
+        <input type="text" id="friendBarcodeField" placeholder="Enter friend's barcode" />
+        <button id="searchButton">Search</button>
     </div>
 
     <script>
@@ -230,19 +160,17 @@
         const passwordField = document.getElementById('passwordField');
         const profileContainer = document.getElementById('profileContainer');
         const barcodeDiv = document.getElementById('barcode');
-        const loginNotification = document.getElementById('loginNotification');
-        const sendNotification = document.getElementById('sendNotification');
-        const barcodeField = document.getElementById('barcodeField');
-        const addFriendButton = document.getElementById('addFriendButton');
-        const friendNotification = document.getElementById('friendNotification');
-        const friendsList = document.getElementById('friendsList');
-        const searchField = document.getElementById('searchField');
-        const uploadPicture = document.getElementById('uploadPicture');
-        const profileImg = document.getElementById('profileImg');
+        const friendSearchContainer = document.getElementById('friendSearchContainer');
+        const friendBarcodeField = document.getElementById('friendBarcodeField');
+        const searchButton = document.getElementById('searchButton');
+        const viewMessagesButton = document.getElementById('viewMessagesButton');
+        const findFriendsButton = document.getElementById('findFriendsButton');
 
+        // Mock database
         let users = {};
         let currentUser = null;
 
+        // Show the login form
         loginContainer.style.display = 'flex';
 
         loginButton.addEventListener('click', () => {
@@ -251,85 +179,82 @@
             const password = passwordField.value.trim();
 
             if (!countryCode) {
-                showNotification(loginNotification, 'Please select your country.');
+                alert('Please select your country.');
                 return;
             }
             if (!isValidPhoneNumber(phoneNumber, countryCode)) {
-                showNotification(loginNotification, 'Please enter a valid phone number.');
+                alert('Please enter a valid phone number.');
                 return;
             }
             if (!password) {
-                showNotification(loginNotification, 'Please create a password.');
+                alert('Please create a password.');
                 return;
             }
 
             const fullPhoneNumber = `+${countryCode}${phoneNumber}`;
             const barcode = generateBarcode();
 
+            // Check if user exists, if not create a new user
             if (!users[fullPhoneNumber]) {
-                users[fullPhoneNumber] = { messages: [], password: password, barcode: barcode, friends: [] };
+                users[fullPhoneNumber] = { messages: [], password: password, barcode: barcode };
             } else if (users[fullPhoneNumber].password !== password) {
-                showNotification(loginNotification, 'Incorrect password.');
+                alert('Incorrect password.');
                 return;
             }
             currentUser = fullPhoneNumber;
 
+            // Hide login and show user profile
             loginContainer.style.display = 'none';
             appHeader.style.display = 'block';
             profileContainer.style.display = 'block';
             barcodeDiv.textContent = users[currentUser].barcode;
 
+            // Load previous messages
             loadMessages();
-            loadFriends();
         });
 
         sendButton.addEventListener('click', () => {
             const messageText = inputField.value.trim();
             if (messageText === '') return;
 
+            // Store the message in the user's mock database
             users[currentUser].messages.push({ text: messageText, type: 'sent' });
+
+            // Display the sent message
             displayMessage(messageText, 'sent');
             inputField.value = '';
             messageContainer.scrollTop = messageContainer.scrollHeight;
-
-            showNotification(sendNotification, 'Message sent!');
         });
 
-        addFriendButton.addEventListener('click', () => {
-            const friendBarcode = barcodeField.value.trim();
+        viewMessagesButton.addEventListener('click', () => {
+            messageContainer.style.display = 'block';
+            messageInput.style.display = 'block';
+            profileContainer.style.display = 'none';
+        });
+
+        findFriendsButton.addEventListener('click', () => {
+            friendSearchContainer.style.display = 'block';
+            profileContainer.style.display = 'none';
+        });
+
+        searchButton.addEventListener('click', () => {
+            const friendBarcode = friendBarcodeField.value.trim();
             if (!friendBarcode) {
-                showNotification(friendNotification, 'Please enter a barcode.');
+                alert('Please enter a barcode.');
                 return;
             }
 
-            const friendFound = Object.values(users).find(user => user.barcode === friendBarcode && user !== users[currentUser]);
-            if (friendFound) {
-                users[currentUser].friends.push(friendFound.barcode);
-                showNotification(friendNotification, 'Friend added successfully!');
-                loadFriends();
-            } else {
-                showNotification(friendNotification, 'Friend not found.');
-            }
-            barcodeField.value = '';
-        });
-
-        uploadPicture.addEventListener('change', function() {
-            const file = this.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    profileImg.src = e.target.result;
-                    profileImg.style.display = 'block';
+            // Search for the friend in the users object
+            for (const phoneNumber of Object.keys(users)) {
+                if (users[phoneNumber].barcode === friendBarcode) {
+                    // Friend found, you can now display their profile or start a chat with them
+                    alert(`Friend ${phoneNumber} found!`);
+                    // Add code to display friend's profile or start a chat
+                    return;
                 }
-                reader.readAsDataURL(file);
             }
-        });
 
-        searchField.addEventListener('input', () => {
-            const query = searchField.value.toLowerCase();
-            const friends = users[currentUser].friends;
-            const filteredFriends = friends.filter(barcode => barcode.toLowerCase().includes(query));
-            displayFriends(filteredFriends);
+            alert('Friend not found.');
         });
 
         function displayMessage(text, type) {
@@ -341,53 +266,35 @@
 
         function loadMessages() {
             const messages = users[currentUser].messages;
-            messageContainer.innerHTML = ''; 
+            messageContainer.innerHTML = ''; // Clear previous messages
             messages.forEach(msg => {
                 displayMessage(msg.text, msg.type);
-            });
-            messageContainer.style.display = 'block';
-            messageInput.style.display = 'flex';
-        }
-
-        function loadFriends() {
-            const friends = users[currentUser].friends;
-            displayFriends(friends);
-        }
-
-        function displayFriends(friends) {
-            friendsList.innerHTML = '';
-            friends.forEach(friendBarcode => {
-                const friendElement = document.createElement('div');
-                friendElement.className = 'friend';
-                friendElement.innerHTML = `<span class="friendName">${friendBarcode}</span>`;
-                friendsList.appendChild(friendElement);
             });
         }
 
         function isValidPhoneNumber(phoneNumber, countryCode) {
             const sudanRegex = /^[1-9]\d{8}$/; // 9 digits
-            const saudiRegex = /^5\d{8}$/; // 9 digits starting with 5
-            return countryCode === '249' ? sudanRegex.test(phoneNumber) : saudiRegex.test(phoneNumber);
+            const saudiRegex = /^5 \d{8}$/; // 9 digits starting with 5
+            if (countryCode === '249') {
+                return sudanRegex.test(phoneNumber);
+            } else if (countryCode === '966') {
+                return saudiRegex.test(phoneNumber);
+            }
+            return false;
         }
 
         function generateBarcode() {
-            return Math.random().toString(36).substring(2, 10).toUpperCase();
+            return Math.random().toString(36).substring(2, 10).toUpperCase(); // Generate a random barcode
         }
 
-        function showNotification(notificationElement, message) {
-            notificationElement.textContent = message;
-            notificationElement.style.display = 'block';
-            setTimeout(() => {
-                notificationElement.style.display = 'none';
-            }, 3000);
-        }
-
+        // For demonstration, adding a sample received message
         function addSampleReceivedMessage() {
             const receivedMessage = 'Hello! This is a received message.';
             users[currentUser].messages.push({ text: receivedMessage, type: 'received' });
             displayMessage(receivedMessage, 'received');
         }
 
+        // Call this function to add a sample message
         addSampleReceivedMessage();
     </script>
 </body>
